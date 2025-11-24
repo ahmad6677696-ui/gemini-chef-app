@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جیمنی شیف: سمارٹ ریسیپی جنریٹر</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Noto Nastaliq Urdu for Noori Nastaliq style -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Nastaliq Urdu', serif;
+        }
+        /* Simple scrollbar for recipe output, adjusted for RTL appearance */
+        #recipeOutput::-webkit-scrollbar {
+            width: 8px;
+        }
+        #recipeOutput::-webkit-scrollbar-track {
+            background: #f1f5f9; /* gray-100 */
+        }
+        #recipeOutput::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* gray-400 */
+            border-radius: 4px;
+        }
+        #recipeOutput::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* gray-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white w-full max-w-3xl rounded-xl shadow-2xl p-6 sm:p-10">
+        
+        <!-- Header Section -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">
+                جیمنی 
+                <span class="text-green-600">شیف</span>
+                <span class="text-yellow-400">🧑‍🍳</span>
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">آپ کا سمارٹ ریسیپی جنریٹر</p>
+        </header>
+
+        <!-- Input Form Section -->
+        <div class="space-y-6">
+            <div>
+                <label for="ingredientsInput" class="block text-sm font-medium text-gray-700 mb-2">
+                    آپ کے پاس کون سے اجزاء ہیں؟
+                </label>
+                <textarea id="ingredientsInput"
+                    class="w-full h-24 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-right"
+                    placeholder="مثلاً، چکن، بروکلی، پاستا، لہسن..."></textarea>
+            </div>
+            
+            <div>
+                <label for="preferenceSelect" class="block text-sm font-medium text-gray-700 mb-2">
+                    کوئی خاص ترجیحات؟
+                </label>
+                <select id="preferenceSelect"
+                    class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-right">
+                    <option value="General">عمومی</option>
+                    <option value="Vegan">سبزی خوری (ویگن)</option>
+                    <option value="Keto">کیٹو</option>
+                    <option value="Quick Meal">فوری کھانا</option>
+                    <option value="Italian">اطالوی</option>
+                    <option value="Mexican">میکسیکن</option>
+                </select>
+            </div>
+            
+            <button id="generateButton"
+                class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                ریسیپی بنائیں
+            </button>
+        </div>
+
+        <!-- Output Section -->
+        <div class="mt-10">
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="text-center text-gray-600 text-lg hidden">
+                <p>🧑‍🍳 ایک نئی ریسیپی تیار ہو رہی ہے... براہ کرم انتظار کریں۔</p>
+            </div>
+
+            <!-- Error Message Box -->
+            <div id="errorMessage" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-right">
+                <p><span class="font-bold">خرابی:</span> <span id="errorText"></span></p>
+            </div>
+
+            <!-- Recipe Output -->
+            <div id="recipeOutput" class="hidden mt-6 border border-gray-200 rounded-lg shadow-inner max-h-[60vh] overflow-y-auto">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ingredientsInput = document.getElementById('ingredientsInput');
+        const preferenceSelect = document.getElementById('preferenceSelect');
+        const generateButton = document.getElementById('generateButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const recipeOutput = document.getElementById('recipeOutput');
+
+        const apiKey = ""; // API key will be automatically provided by the environment
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+        // The mandatory JSON schema (structure remains in English for coding stability)
+        const recipeSchema = {
+            "type": "OBJECT",
+            "properties": {
+                "recipeName": { "type": "STRING", "description": "The creative and appealing name of the recipe." },
+                "prepTime": { "type": "STRING", "description": "Total preparation and cooking time, e.g., '45 minutes'." },
+                "servings": { "type": "STRING", "description": "Number of servings, e.g., '4 people'." },
+                "ingredients": {
+                    "type": "ARRAY",
+                    "items": { "type": "STRING", "description": "A single ingredient item (e.g., '2 cups chicken broth')." }
+                },
+                "instructions": {
+                    "type": "ARRAY",
+                    "items": { "type": "STRING", "description": "A single, clear step of the cooking instructions." }
+                }
+            },
+            "required": ["recipeName", "prepTime", "servings", "ingredients", "instructions"]
+        };
+
+        generateButton.addEventListener('click', generateRecipe);
+
+        // --- TTS Helper Functions ---
+
+        // Base64 to ArrayBuffer conversion
+        function base64ToArrayBuffer(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // PCM to WAV conversion (API returns signed PCM 16 bit)
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1;
+            const bytesPerSample = 2; // 16-bit PCM
+            const buffer = new ArrayBuffer(44 + pcm16.length * bytesPerSample);
+            const view = new DataView(buffer);
+            
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+
+            // RIFF identifier
+            writeString(view, 0, 'RIFF');
+            // File size (not including RIFF chunk and chunk size)
+            view.setUint32(4, 36 + pcm16.length * bytesPerSample, true);
+            // 'WAVE' format
+            writeString(view, 8, 'WAVE');
+            
+            // FMT sub-chunk
+            writeString(view, 12, 'fmt '); // 'fmt ' chunk identifier
+            view.setUint32(16, 16, true);  // Chunk size: 16
+            view.setUint16(20, 1, true);   // Audio format: 1 (PCM)
+            view.setUint16(22, numChannels, true); // Number of channels
+            view.setUint32(24, sampleRate, true); // Sample rate
+            view.setUint32(28, sampleRate * numChannels * bytesPerSample, true); // Byte rate
+            view.setUint16(32, numChannels * bytesPerSample, true); // Block align
+            view.setUint16(34, 16, true);  // Bits per sample
+            
+            // DATA sub-chunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16.length * bytesPerSample, true); // Data size
+            
+            // Write the PCM data
+            let offset = 44;
+            for (let i = 0; i < pcm16.length; i++, offset += bytesPerSample) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+            
+            return new Blob([view], { type: 'audio/wav' });
+        }
+        
+        // --- Core Recipe Generation Function (Uses structured JSON) ---
+
+        async function generateRecipe() {
+            const ingredients = ingredientsInput.value.trim();
+            const preference = preferenceSelect.value;
+            
+            if (!ingredients) {
+                showError("براہ کرم کم از کم ایک جزو درج کریں۔");
+                return;
+            }
+
+            // Build the user query, explicitly asking for the recipe to be generated in Urdu.
+            const userQuery = `Generate a ${preference} recipe using these ingredients: ${ingredients}. The entire recipe, including the name, preparation time, servings, ingredients list, and instructions, must be generated in the Urdu language.`;
+
+            // Reset UI
+            hideError();
+            recipeOutput.classList.add('hidden');
+            recipeOutput.innerHTML = '';
+            loadingIndicator.classList.remove('hidden');
+            generateButton.disabled = true;
+            generateButton.textContent = 'تیار ہو رہا ہے...';
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: recipeSchema
+                }
+            };
+
+            try {
+                const response = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.json();
+                    throw new Error(errorBody.error?.message || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    const jsonText = result.candidates[0].content.parts[0].text;
+                    const parsedJson = JSON.parse(jsonText);
+                    
+                    displayRecipe(parsedJson);
+
+                } else {
+                    throw new Error("API سے غیر موزوں جواب موصول ہوا۔ (Invalid response structure from API.)");
+                }
+
+            } catch (error) {
+                console.error("Error during API call:", error);
+                showError("ریسیپی بنانے میں ناکامی ہوئی۔ براہ کرم دوبارہ کوشش کریں۔ (" + (error.message.includes("HTTP") ? `HTTP Error: ${error.message.split(':').pop().trim()}` : "API Error") + ")");
+            } finally {
+                // Restore UI
+                loadingIndicator.classList.add('hidden');
+                generateButton.disabled = false;
+                generateButton.textContent = 'ریسیپی بنائیں';
+            }
+        }
+        
+        // --- TTS Read Aloud Feature ---
+
+        async function readRecipeInstructions(instructions) {
+            const ttsButton = document.getElementById('ttsButton');
+            ttsButton.disabled = true;
+            const originalText = ttsButton.innerHTML;
+            ttsButton.innerHTML = '...پڑھا جا رہا ہے';
+            
+            // Combine instructions into a single reading text
+            const instructionsText = instructions.join('. ') + ' ریسپی مکمل ہوئی۔';
+            // Request TTS in Urdu using a clear voice (Kore is firm/clear)
+            const ttsQuery = `اردو میں پڑھیں: ${instructionsText}`;
+
+            const ttsPayload = {
+                contents: [{ parts: [{ text: ttsQuery }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Kore" }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+            
+            const ttsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetchWithBackoff(ttsApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ttsPayload)
+                });
+
+                if (!response.ok) throw new Error(`TTS HTTP error! status: ${response.status}`);
+                
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                    // Extract sample rate (default is often 16000)
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                    
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+
+                    audio.onended = () => {
+                        ttsButton.disabled = false;
+                        ttsButton.innerHTML = originalText;
+                        URL.revokeObjectURL(audioUrl);
+                    };
+
+                } else {
+                    throw new Error("TTS API سے آڈیو ڈیٹا موصول نہیں ہوا۔");
+                }
+                
+            } catch (error) {
+                console.error("TTS Error:", error);
+                showError("آواز میں پڑھنے میں ناکامی۔");
+                ttsButton.disabled = false;
+                ttsButton.innerHTML = originalText;
+            }
+        }
+        
+        // --- Nutritional Analysis Feature ---
+
+        async function analyzeNutrition(recipe) {
+            const analysisButton = document.getElementById('analysisButton');
+            const analysisOutput = document.getElementById('analysisOutput');
+            
+            // Toggle logic for display/hide
+            if (!analysisOutput.classList.contains('hidden')) {
+                analysisOutput.classList.add('hidden');
+                analysisButton.innerHTML = '✨ غذائی تجزیہ کریں';
+                return;
+            }
+            
+            analysisOutput.innerHTML = '<p class="text-center p-4 text-gray-500">تجزیہ کیا جا رہا ہے...</p>';
+            analysisOutput.classList.remove('hidden');
+            analysisButton.disabled = true;
+            analysisButton.innerHTML = '...تجزیہ ہو رہا ہے';
+            
+            // Construct the full recipe text from the parsed JSON
+            const recipeText = `
+                Recipe Name: ${recipe.recipeName}
+                Prep Time: ${recipe.prepTime}
+                Servings: ${recipe.servings}
+                Ingredients: ${recipe.ingredients.join(', ')}
+                Instructions: ${recipe.instructions.join('. ')}
+            `;
+
+            // Query for nutritional analysis in Urdu
+            const userQuery = `Analyze the nutritional content of the following recipe. Provide a concise summary in Urdu that includes estimated calories, the main macro-nutrients (protein, fat, carbs), and a health score or a simple health tip (e.g., 'Low Carb', 'High Fiber'). The output must be formatted using markdown lists or bold text.
+
+            Recipe to analyze:
+            ${recipeText}`;
+
+            // Use standard API for text analysis
+            const analysisApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }]
+            };
+
+            try {
+                const response = await fetchWithBackoff(analysisApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`Analysis HTTP error! status: ${response.status}`);
+                
+                const result = await response.json();
+                const analysisText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (analysisText) {
+                    // Simple markdown to HTML conversion for display
+                    const htmlContent = analysisText
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                        .replace(/^- /gm, '<li class="list-none relative pr-4"><span class="absolute right-0 top-1.5 h-2 w-2 bg-yellow-500 rounded-full"></span><span class="mr-4">')
+                        .replace(/$/gm, '</span></li>')
+                        .replace(/\n\n/g, '<br><br>');
+
+                    analysisOutput.innerHTML = `
+                        <div class="p-4 bg-yellow-50 border-t-2 border-yellow-300 rounded-b-lg shadow-inner mt-4">
+                            <h4 class="text-lg font-bold text-yellow-800 mb-2">غذائی تجزیہ</h4>
+                            <ul class="text-gray-700 space-y-2 text-right">${htmlContent}</ul>
+                        </div>
+                    `;
+                } else {
+                    analysisOutput.innerHTML = '<p class="text-center p-4 text-red-500">تجزیہ حاصل کرنے میں ناکامی۔</p>';
+                }
+
+            } catch (error) {
+                console.error("Nutritional Analysis Error:", error);
+                analysisOutput.innerHTML = '<p class="text-center p-4 text-red-500">تجزیہ کے دوران خرابی پیش آئی۔</p>';
+            } finally {
+                analysisButton.disabled = false;
+                analysisButton.innerHTML = '✨ تجزیہ چھپائیں';
+            }
+        }
+        
+        // --- Display and Utility Functions ---
+        
+        function displayRecipe(recipe) {
+            const recipeHTML = `
+                <div class="p-6 sm:p-8 text-right">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">${recipe.recipeName}</h2>
+                    
+                    <!-- Feature Buttons -->
+                    <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-reverse sm:space-x-4 mb-6">
+                        <button id="ttsButton" class="flex items-center justify-center bg-green-100 text-green-700 font-medium py-2 px-4 rounded-full hover:bg-green-200 transition duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a9 9 0 010 7.072m-4.32-8.583a4.501 4.501 0 015.657 0m-8.989 5.657L11.5 12.5l-3.989-1.995A1 1 0 017 9.5v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5a1 1 0 011-1h1.999a1 1 0 011 .995zM12 21a9 9 0 100-18 9 9 0 000 18z"></path></svg>
+                            ریسیپی پڑھیں
+                        </button>
+                        <button id="analysisButton" class="flex items-center justify-center bg-yellow-100 text-yellow-700 font-medium py-2 px-4 rounded-full hover:bg-yellow-200 transition duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm">
+                            <span class="ml-2">✨</span> غذائی تجزیہ کریں
+                        </button>
+                    </div>
+
+                    <!-- Nutritional Analysis Output (Initially Hidden) -->
+                    <div id="analysisOutput" class="hidden"></div>
+                    
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-reverse sm:space-x-6 text-gray-600 mb-6 justify-end">
+                        <span class="flex items-center justify-end sm:justify-start">
+                            <strong>:تیاری کا وقت</strong>&nbsp;
+                            <svg class="w-5 h-5 ml-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            ${recipe.prepTime}
+                        </span>
+                        <span class="flex items-center justify-end sm:justify-start">
+                            <strong>:سرونگز</strong>&nbsp;
+                            <svg class="w-5 h-5 ml-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            ${recipe.servings}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-1 text-right">اجزاء</h3>
+                            <!-- For RTL lists, list-disc may display on the left, so we use custom padding and text-right -->
+                            <ul class="space-y-1 text-gray-700 list-none pr-4">
+                                ${recipe.ingredients.map(item => `<li class="relative"><span class="absolute right-0 top-1.5 h-2 w-2 bg-green-500 rounded-full"></span><span class="mr-4">${item}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="md:col-span-2">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-1 text-right">ہدایات</h3>
+                            <!-- For RTL numbered lists, we use custom numbering and text-right -->
+                            <ol class="space-y-3 text-gray-700 list-none pr-6">
+                                ${recipe.instructions.map((step, index) => `<li class="relative"><span class="absolute right-0 font-bold text-green-600">${index + 1}.</span><span class="mr-6">${step}</span></li>`).join('')}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            `;
+            recipeOutput.innerHTML = recipeHTML;
+
+            // Attach new listeners after DOM insertion
+            document.getElementById('ttsButton').addEventListener('click', () => readRecipeInstructions(recipe.instructions));
+            document.getElementById('analysisButton').addEventListener('click', () => analyzeNutrition(recipe));
+            
+            recipeOutput.classList.remove('hidden');
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+            errorText.textContent = '';
+        }
+
+        // Exponential backoff fetch
+        async function fetchWithBackoff(url, options, maxRetries = 5, baseDelay = 1000) {
+            let attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 429 || (response.status >= 500 && response.status <= 599)) {
+                        // Throttling or server error, retry
+                        throw new Error(`Retryable error: ${response.status}`);
+                    }
+                    return response; // Success
+                } catch (error) {
+                    if (attempt === maxRetries - 1) {
+                        throw error; // Max retries reached
+                    }
+                    const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    attempt++;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
