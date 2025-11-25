@@ -314,7 +314,7 @@
             
             // Combine instructions into a single reading text
             const instructionsText = instructions.join('. ') + ' ریسپی مکمل ہوئی۔';
-            // Request TTS in Urdu using a clear voice (Kore is firm/clear)
+            // Request TTS in Urdu using a clear voice (Zephyr is Bright/stable)
             const ttsQuery = `اردو میں پڑھیں: ${instructionsText}`;
 
             const ttsPayload = {
@@ -323,7 +323,7 @@
                     responseModalities: ["AUDIO"],
                     speechConfig: {
                         voiceConfig: {
-                            prebuiltVoiceConfig: { voiceName: "Kore" }
+                            prebuiltVoiceConfig: { voiceName: "Zephyr" } // Changed from Kore to Zephyr for stability
                         }
                     }
                 },
