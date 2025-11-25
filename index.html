@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="ur" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>جیمنی شیف: سمارٹ ریسیپی جنریٹر</title>
+    <title>Gemini Chef: Smart Recipe Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Noto Nastaliq Urdu for Noori Nastaliq style -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Using Inter font, as is standard -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Noto Nastaliq Urdu', serif;
+            font-family: 'Inter', sans-serif;
         }
-        /* Simple scrollbar for recipe output, adjusted for RTL appearance */
+        /* Simple scrollbar for recipe output, adjusted for LTR appearance */
         #recipeOutput::-webkit-scrollbar {
             width: 8px;
         }
@@ -36,42 +36,42 @@
         <!-- Header Section -->
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-gray-800">
-                جیمنی 
-                <span class="text-green-600">شیف</span>
+                Gemini 
+                <span class="text-green-600">Chef</span>
                 <span class="text-yellow-400">🧑‍🍳</span>
             </h1>
-            <p class="text-gray-600 mt-2 text-lg">آپ کا سمارٹ ریسیپی جنریٹر</p>
+            <p class="text-gray-600 mt-2 text-lg">Your Smart Recipe Generator</p>
         </header>
 
         <!-- Input Form Section -->
         <div class="space-y-6">
             <div>
                 <label for="ingredientsInput" class="block text-sm font-medium text-gray-700 mb-2">
-                    آپ کے پاس کون سے اجزاء ہیں؟
+                    What ingredients do you have?
                 </label>
                 <textarea id="ingredientsInput"
-                    class="w-full h-24 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-right"
-                    placeholder="مثلاً، چکن، بروکلی، پاستا، لہسن..."></textarea>
+                    class="w-full h-24 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150"
+                    placeholder="e.g., Chicken, broccoli, pasta, garlic, cheese..."></textarea>
             </div>
             
             <div>
                 <label for="preferenceSelect" class="block text-sm font-medium text-gray-700 mb-2">
-                    کوئی خاص ترجیحات؟
+                    Any specific preferences or cuisine?
                 </label>
                 <select id="preferenceSelect"
-                    class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150 text-right">
-                    <option value="General">عمومی</option>
-                    <option value="Vegan">سبزی خوری (ویگن)</option>
-                    <option value="Keto">کیٹو</option>
-                    <option value="Quick Meal">فوری کھانا</option>
-                    <option value="Italian">اطالوی</option>
-                    <option value="Mexican">میکسیکن</option>
+                    class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 transition duration-150">
+                    <option value="General">General</option>
+                    <option value="Vegan">Vegan</option>
+                    <option value="Keto">Keto</option>
+                    <option value="Quick Meal">Quick Meal</option>
+                    <option value="Italian">Italian</option>
+                    <option value="Mexican">Mexican</option>
                 </select>
             </div>
             
             <button id="generateButton"
                 class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105 active:scale-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
-                ریسیپی بنائیں
+                Generate Recipe
             </button>
         </div>
 
@@ -79,12 +79,12 @@
         <div class="mt-10">
             <!-- Loading Indicator -->
             <div id="loadingIndicator" class="text-center text-gray-600 text-lg hidden">
-                <p>🧑‍🍳 ایک نئی ریسیپی تیار ہو رہی ہے... براہ کرم انتظار کریں۔</p>
+                <p>🧑‍🍳 Cooking up a new recipe... please wait.</p>
             </div>
 
             <!-- Error Message Box -->
-            <div id="errorMessage" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-right">
-                <p><span class="font-bold">خرابی:</span> <span id="errorText"></span></p>
+            <div id="errorMessage" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                <p><span class="font-bold">Error:</span> <span id="errorText"></span></p>
             </div>
 
             <!-- Recipe Output -->
@@ -190,15 +190,15 @@
             const preference = preferenceSelect.value;
             
             if (!ingredients) {
-                showError("براہ کرم کم از کم ایک جزو درج کریں۔");
+                showError("Please enter at least one ingredient.");
                 return;
             }
 
-            // Build the user query, explicitly asking for the recipe to be generated in Urdu.
-            const userQuery = `Generate a ${preference} recipe using these ingredients: ${ingredients}. The entire recipe, including the name, preparation time, servings, ingredients list, and instructions, must be generated in the Urdu language.`;
+            // Build the user query, explicitly asking for the recipe to be generated in English.
+            const userQuery = `Generate a ${preference} recipe using these ingredients: ${ingredients}. The entire recipe, including the name, preparation time, servings, ingredients list, and instructions, must be generated in the English language.`;
             
             // CRITICAL IMPROVEMENT: System Instruction to enforce strict JSON output
-            const systemPrompt = `You are a strict, expert chef AI. Your sole task is to generate a recipe in the Urdu language and STRICTLY follow the provided JSON schema. Output ONLY the JSON object, with no preamble, explanation, or markdown formatting (like \`\`\`json\`). The recipe content must be in Urdu.`;
+            const systemPrompt = `You are a strict, expert chef AI. Your sole task is to generate a recipe in the English language and STRICTLY follow the provided JSON schema. Output ONLY the JSON object, with no preamble, explanation, or markdown formatting (like \`\`\`json\`). The recipe content must be in English.`;
 
             // Reset UI
             hideError();
@@ -206,7 +206,7 @@
             recipeOutput.innerHTML = '';
             loadingIndicator.classList.remove('hidden');
             generateButton.disabled = true;
-            generateButton.textContent = 'تیار ہو رہا ہے...';
+            generateButton.textContent = 'Generating...';
             
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
@@ -269,27 +269,27 @@
                     displayRecipe(parsedJson);
 
                 } else {
-                    throw new Error("API سے غیر موزوں جواب موصول ہوا۔ (Invalid response structure from API.)");
+                    throw new Error("Invalid response structure from API.");
                 }
 
             } catch (error) {
                 // *** ULTIMATE ROBUSTNESS ERROR HANDLING ***
                 console.error("Critical Error during Recipe Generation:", error);
                 
-                let userMessage = "ریسیپی بنانے میں ناکامی ہوئی۔ براہ کرم دوبارہ کوشش کریں۔";
+                let userMessage = "Failed to generate recipe. Please try again.";
                 
                 if (error.message.includes("Invalid structured response")) {
-                    userMessage = `ریسیپی بنانے میں ناکامی۔ ماڈل نے ساخت شدہ (Structured) JSON کی تعمیل نہیں کی۔ براہ کرم دوبارہ کوشش کریں۔`;
+                    userMessage = `Recipe generation failed. The model did not comply with the structured JSON format. Please try again.`;
                     // Display the raw text if available for debugging
                     const rawOutput = error.message.split('Raw output received:').pop().trim();
-                    recipeOutput.innerHTML = `<div class="p-4 text-red-700 bg-red-100 rounded-lg text-right"><h4>خام جواب (Raw Response):</h4><pre class="whitespace-pre-wrap">${rawOutput}</pre></div>`;
+                    recipeOutput.innerHTML = `<div class="p-4 text-red-700 bg-red-100 rounded-lg"><h4>Raw Response:</h4><pre class="whitespace-pre-wrap">${rawOutput}</pre></div>`;
                     recipeOutput.classList.remove('hidden');
                 } else if (error.message.includes("HTTP")) {
                     // Handle API HTTP errors (400, 403, 500, etc.)
-                     userMessage = `API کنکشن میں خرابی: ${error.message.split(':').pop().trim()}`;
+                     userMessage = `API Connection Error: ${error.message.split(':').pop().trim()}`;
                 } else if (error.message.includes("Failed to fetch")) {
                     // Handle network issues (CORS, internet down, domain resolution)
-                     userMessage = `نیٹ ورک کنکشن یا API تک رسائی میں مسئلہ۔ براہ کرم اپنا انٹرنیٹ چیک کریں۔`;
+                     userMessage = `Network connection or API access issue. Please check your internet.`;
                 } else {
                      userMessage += ` (Error: ${error.message.substring(0, 70)}...)`;
                 }
@@ -300,7 +300,7 @@
                 // Restore UI in all cases
                 loadingIndicator.classList.add('hidden');
                 generateButton.disabled = false;
-                generateButton.textContent = 'ریسیپی بنائیں';
+                generateButton.textContent = 'Generate Recipe';
             }
         }
         
@@ -310,12 +310,12 @@
             const ttsButton = document.getElementById('ttsButton');
             ttsButton.disabled = true;
             const originalText = ttsButton.innerHTML;
-            ttsButton.innerHTML = '...پڑھا جا رہا ہے';
+            ttsButton.innerHTML = '...Reading';
             
             // Combine instructions into a single reading text
-            const instructionsText = instructions.join('. ') + ' ریسپی مکمل ہوئی۔';
-            // Request TTS in Urdu using a clear voice (Zephyr is Bright/stable)
-            const ttsQuery = `اردو میں پڑھیں: ${instructionsText}`;
+            const instructionsText = instructions.join('. ') + ' Recipe complete.';
+            // Request TTS in English using the Zephyr voice
+            const ttsQuery = `Read the following recipe instructions: ${instructionsText}`;
 
             const ttsPayload = {
                 contents: [{ parts: [{ text: ttsQuery }] }],
@@ -323,7 +323,7 @@
                     responseModalities: ["AUDIO"],
                     speechConfig: {
                         voiceConfig: {
-                            prebuiltVoiceConfig: { voiceName: "Zephyr" } // Changed from Kore to Zephyr for stability
+                            prebuiltVoiceConfig: { voiceName: "Zephyr" } 
                         }
                     }
                 },
@@ -366,12 +366,12 @@
                     };
 
                 } else {
-                    throw new Error("TTS API سے آڈیو ڈیٹا موصول نہیں ہوا۔");
+                    throw new Error("TTS API did not return audio data.");
                 }
                 
             } catch (error) {
                 console.error("TTS Error:", error);
-                showError("آواز میں پڑھنے میں ناکامی۔");
+                showError("Failed to read aloud.");
                 ttsButton.disabled = false;
                 ttsButton.innerHTML = originalText;
             }
@@ -386,14 +386,14 @@
             // Toggle logic for display/hide
             if (!analysisOutput.classList.contains('hidden')) {
                 analysisOutput.classList.add('hidden');
-                analysisButton.innerHTML = '✨ غذائی تجزیہ کریں';
+                analysisButton.innerHTML = '✨ Analyze Nutrition';
                 return;
             }
             
-            analysisOutput.innerHTML = '<p class="text-center p-4 text-gray-500">تجزیہ کیا جا رہا ہے...</p>';
+            analysisOutput.innerHTML = '<p class="text-center p-4 text-gray-500">Analyzing...</p>';
             analysisOutput.classList.remove('hidden');
             analysisButton.disabled = true;
-            analysisButton.innerHTML = '...تجزیہ ہو رہا ہے';
+            analysisButton.innerHTML = '...Analyzing';
             
             // Construct the full recipe text from the parsed JSON
             const recipeText = `
@@ -404,8 +404,8 @@
                 Instructions: ${recipe.instructions.join('. ')}
             `;
 
-            // Query for nutritional analysis in Urdu
-            const userQuery = `Analyze the nutritional content of the following recipe. Provide a concise summary in Urdu that includes estimated calories, the main macro-nutrients (protein, fat, carbs), and a health score or a simple health tip (e.g., 'Low Carb', 'High Fiber'). The output must be formatted using markdown lists or bold text.
+            // Query for nutritional analysis in English
+            const userQuery = `Analyze the nutritional content of the following recipe. Provide a concise summary in English that includes estimated calories, the main macro-nutrients (protein, fat, carbs), and a health score or a simple health tip (e.g., 'Low Carb', 'High Fiber'). The output must be formatted using markdown lists or bold text.
 
             Recipe to analyze:
             ${recipeText}`;
@@ -433,26 +433,26 @@
                     // Simple markdown to HTML conversion for display
                     const htmlContent = analysisText
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-                        .replace(/^- /gm, '<li class="list-none relative pr-4"><span class="absolute right-0 top-1.5 h-2 w-2 bg-yellow-500 rounded-full"></span><span class="mr-4">')
+                        .replace(/^- /gm, '<li class="list-none relative pl-4"><span class="absolute left-0 top-1.5 h-2 w-2 bg-yellow-500 rounded-full"></span><span class="ml-4">')
                         .replace(/$/gm, '</span></li>')
                         .replace(/\n\n/g, '<br><br>');
 
                     analysisOutput.innerHTML = `
                         <div class="p-4 bg-yellow-50 border-t-2 border-yellow-300 rounded-b-lg shadow-inner mt-4">
-                            <h4 class="text-lg font-bold text-yellow-800 mb-2">غذائی تجزیہ</h4>
-                            <ul class="text-gray-700 space-y-2 text-right">${htmlContent}</ul>
+                            <h4 class="text-lg font-bold text-yellow-800 mb-2">Nutritional Analysis</h4>
+                            <ul class="text-gray-700 space-y-2 text-left">${htmlContent}</ul>
                         </div>
                     `;
                 } else {
-                    analysisOutput.innerHTML = '<p class="text-center p-4 text-red-500">تجزیہ حاصل کرنے میں ناکامی۔</p>';
+                    analysisOutput.innerHTML = '<p class="text-center p-4 text-red-500">Failed to get analysis.</p>';
                 }
 
             } catch (error) {
                 console.error("Nutritional Analysis Error:", error);
-                analysisOutput.innerHTML = '<p class="text-center p-4 text-red-500">تجزیہ کے دوران خرابی پیش آئی۔</p>';
+                analysisOutput.innerHTML = '<p class="text-center p-4 text-red-500">An error occurred during analysis.</p>';
             } finally {
                 analysisButton.disabled = false;
-                analysisButton.innerHTML = '✨ تجزیہ چھپائیں';
+                analysisButton.innerHTML = '✨ Hide Analysis';
             }
         }
         
@@ -460,49 +460,49 @@
         
         function displayRecipe(recipe) {
             const recipeHTML = `
-                <div class="p-6 sm:p-8 text-right">
+                <div class="p-6 sm:p-8 text-left">
                     <h2 class="text-3xl font-bold text-gray-800 mb-4">${recipe.recipeName}</h2>
                     
                     <!-- Feature Buttons -->
-                    <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-reverse sm:space-x-4 mb-6">
+                    <div class="flex flex-col sm:flex-row justify-start space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
                         <button id="ttsButton" class="flex items-center justify-center bg-green-100 text-green-700 font-medium py-2 px-4 rounded-full hover:bg-green-200 transition duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
-                            <span class="ml-2">🔊</span>
-                            ریسیپی پڑھیں
+                            <span class="mr-2">🔊</span>
+                            Read Instructions
                         </button>
                         <button id="analysisButton" class="flex items-center justify-center bg-yellow-100 text-yellow-700 font-medium py-2 px-4 rounded-full hover:bg-yellow-200 transition duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm">
-                            <span class="ml-2">✨</span> غذائی تجزیہ کریں
+                            <span class="mr-2">✨</span> Analyze Nutrition
                         </button>
                     </div>
 
                     <!-- Nutritional Analysis Output (Initially Hidden) -->
                     <div id="analysisOutput" class="hidden"></div>
                     
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-reverse sm:space-x-6 text-gray-600 mb-6 justify-end">
-                        <span class="flex items-center justify-end sm:justify-start">
-                            <strong>:تیاری کا وقت</strong>&nbsp;
-                            <span class="ml-2 text-yellow-500">⏱️</span>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6 text-gray-600 mb-6 justify-start">
+                        <span class="flex items-center">
+                            <span class="mr-2 text-yellow-500">⏱️</span>
+                            <strong>Prep Time:</strong>&nbsp;
                             ${recipe.prepTime}
                         </span>
-                        <span class="flex items-center justify-end sm:justify-start">
-                            <strong>:سرونگز</strong>&nbsp;
-                            <span class="ml-2 text-green-500">🍽️</span>
+                        <span class="flex items-center">
+                            <span class="mr-2 text-green-500">🍽️</span>
+                            <strong>Servings:</strong>&nbsp;
                             ${recipe.servings}
                         </span>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="md:col-span-1">
-                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-1 text-right">اجزاء</h3>
-                            <!-- For RTL lists, list-disc may display on the left, so we use custom padding and text-right -->
-                            <ul class="space-y-1 text-gray-700 list-none pr-4">
-                                ${recipe.ingredients.map(item => `<li class="relative"><span class="absolute right-0 top-1.5 h-2 w-2 bg-green-500 rounded-full"></span><span class="mr-4">${item}</span></li>`).join('')}
+                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-1 text-left">Ingredients</h3>
+                            <!-- LTR lists use list-none with padding-left and margin-left adjustments -->
+                            <ul class="space-y-1 text-gray-700 list-none pl-4">
+                                ${recipe.ingredients.map(item => `<li class="relative"><span class="absolute left-0 top-1.5 h-2 w-2 bg-green-500 rounded-full"></span><span class="ml-4">${item}</span></li>`).join('')}
                             </ul>
                         </div>
                         <div class="md:col-span-2">
-                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-1 text-right">ہدایات</h3>
-                            <!-- For RTL numbered lists, we use custom numbering and text-right -->
-                            <ol class="space-y-3 text-gray-700 list-none pr-6">
-                                ${recipe.instructions.map((step, index) => `<li class="relative"><span class="absolute right-0 font-bold text-green-600">${index + 1}.</span><span class="mr-6">${step}</span></li>`).join('')}
+                            <h3 class="text-xl font-semibold text-gray-700 mb-3 border-b-2 border-green-200 pb-1 text-left">Instructions</h3>
+                            <!-- LTR numbered lists -->
+                            <ol class="space-y-3 text-gray-700 list-none pl-6">
+                                ${recipe.instructions.map((step, index) => `<li class="relative"><span class="absolute left-0 font-bold text-green-600">${index + 1}.</span><span class="ml-6">${step}</span></li>`).join('')}
                             </ol>
                         </div>
                     </div>
