@@ -1,2 +1,1 @@
-# gemini-chef-app
-"جیمنی شیف" ایک جدید، ایک صفحے پر مشتمل (Single-Page) ویب ایپلیکیشن ہے جو آپ کے پاس موجود اجزاء کی بنیاد پر فوری طور پر نئی اور لذیذ ریسیپیز تیار کرتی ہے۔ یہ ایپلیکیشن Google کے طاقتور Gemini API کے ذریعے چلتی ہے، جو یہ یقینی بناتی ہے کہ ہر ریسیپی نہ صرف تخلیقی ہو بلکہ آپ کی مخصوص ترجیحات (جیسے ویگن یا کیٹو) کے مطابق بھی ہو۔
+Smart Recipe Generator is a web application designed to create custom recipes based on your available ingredients and dietary preferences.
